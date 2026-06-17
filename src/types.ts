@@ -89,6 +89,8 @@ export const LLM_MODELS: Record<LLMProvider, LLMModel[]> = {
     { modelId: "anthropic/claude-opus-4-8-20260514", label: "Claude Opus 4.8 (via OR)", description: "Via OpenRouter" },
     { modelId: "deepseek/deepseek-v4-pro", label: "DeepSeek V4 Pro (via OR)", description: "Via OpenRouter" },
     { modelId: "google/gemini-3.5-flash", label: "Gemini 3.5 Flash (via OR)", description: "Via OpenRouter" },
+    { modelId: "xiaomi/mimo-v2.5-pro", label: "MiMo 2.5 Pro (via OR)", description: "Via OpenRouter" },
+    { modelId: "xiaomi/mimo-v2.5", label: "MiMo 2.5 (via OR)", description: "Via OpenRouter" },
   ],
   grok: [
     { modelId: "grok-4.3", label: "Grok 4.3", description: "Flagship." },
