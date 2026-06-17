@@ -1,0 +1,10 @@
+{
+  "id": "neuro-vault",
+  "name": "Neuro Vault",
+  "version": "0.2.0",
+  "minAppVersion": "1.5.0",
+  "description": "AI agent chat inside Obsidian with tools: web search, academic research, vault operations, PDF reading, and audio transcription.",
+  "author": "Jesús García",
+  "authorUrl": "https://github.com/jaliriogbarrios19",
+  "isDesktopOnly": false
+}

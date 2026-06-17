@@ -1,0 +1,836 @@
+.neuro-vault-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.neuro-vault-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  gap: 8px;
+}
+
+.neuro-vault-chat-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-normal);
+}
+
+.neuro-vault-header-btn {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.neuro-vault-header-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-model-selector {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  max-width: 180px;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-model-selector:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.neuro-vault-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.neuro-vault-message {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  max-width: 85%;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.neuro-vault-message-user {
+  margin-left: auto;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.neuro-vault-message-assistant {
+  margin-right: auto;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.neuro-vault-message-tool {
+  margin-right: auto;
+  background: var(--background-primary);
+  border: 1px dashed var(--background-modifier-border);
+  max-width: 90%;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.neuro-vault-message-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.neuro-vault-tool-call {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--background-primary);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.neuro-vault-tool-call details summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.neuro-vault-tool-call details summary::-webkit-details-marker {
+  display: none;
+}
+
+.neuro-vault-tool-call details summary::before {
+  content: "\25B6";
+  display: inline-block;
+  width: 12px;
+  font-size: 0.6rem;
+  margin-right: 6px;
+  transition: transform 0.15s;
+}
+
+.neuro-vault-tool-call details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.neuro-vault-tool-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  position: relative;
+  cursor: default;
+}
+
+.neuro-vault-tool-badge-icon {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.neuro-vault-tool-badge-name {
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+.neuro-vault-tool-badge-status {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.neuro-vault-tool-badge-success .neuro-vault-tool-badge-status {
+  color: var(--text-success);
+}
+
+.neuro-vault-tool-badge-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  max-width: 400px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  font-family: var(--font-monospace);
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 30;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.neuro-vault-tool-name {
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+.neuro-vault-tool-args {
+  margin-top: 4px;
+  font-family: var(--font-monospace);
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  opacity: 0.7;
+}
+
+.neuro-vault-tool-header {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.neuro-vault-tool-content {
+  font-family: var(--font-monospace);
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  opacity: 0.8;
+}
+
+.neuro-vault-tool-toggle {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  color: var(--text-accent);
+  cursor: pointer;
+  user-select: none;
+}
+
+.neuro-vault-tool-toggle:hover {
+  text-decoration: underline;
+}
+
+.neuro-vault-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+
+.neuro-vault-input-area textarea {
+  flex: 1;
+  resize: none;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.4;
+  min-height: 38px;
+  max-height: 120px;
+  height: var(--nv-h, auto);
+}
+
+.neuro-vault-input-area textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.neuro-vault-input-area button {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.neuro-vault-input-area button:hover {
+  opacity: 0.9;
+}
+
+.neuro-vault-input-area button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.neuro-vault-copy-btn {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.neuro-vault-copy-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-branch-btn {
+  margin-left: 4px;
+}
+
+.neuro-vault-stop-btn {
+  background: var(--text-error) !important;
+}
+
+.neuro-vault-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 32px;
+}
+
+.neuro-vault-empty h2 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: var(--text-normal);
+}
+
+.neuro-vault-empty p {
+  font-size: 0.85rem;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.neuro-vault-empty-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-normal);
+}
+
+.neuro-vault-error {
+  background: var(--background-modifier-error);
+  color: var(--text-error);
+  padding: 8px 14px;
+  margin: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.neuro-vault-retry-btn {
+  background: var(--text-error);
+  color: var(--text-on-accent);
+  border: none;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.neuro-vault-retry-btn:hover {
+  opacity: 0.85;
+}
+
+.neuro-vault-loading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  margin: 0 16px 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.neuro-vault-loading-toggle {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-accent);
+  user-select: none;
+  font-size: 0.9rem;
+  min-width: 14px;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.neuro-vault-loading-toggle:hover {
+  color: var(--text-normal);
+}
+
+.neuro-vault-loading-toggle-expanded {
+  color: var(--text-normal);
+}
+
+.neuro-vault-loading-label {
+  margin-right: 4px;
+}
+
+.neuro-vault-loading-dots {
+  display: inline-block;
+  min-width: 24px;
+  color: var(--text-accent);
+}
+
+.neuro-vault-toggle-key {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.neuro-vault-chat-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.neuro-vault-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.neuro-vault-messages-hidden {
+  display: none;
+}
+
+.neuro-vault-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-right: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  min-width: 40px;
+}
+
+.neuro-vault-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.neuro-vault-sidebar-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-sidebar-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.neuro-vault-incognito-btn.neuro-vault-incognito-active {
+  color: var(--text-warning);
+  background: var(--background-modifier-warning);
+}
+
+.neuro-vault-mode-btn.neuro-vault-mode-agent {
+  color: var(--text-accent);
+  background: var(--background-modifier-accent);
+}
+
+.neuro-vault-autocomplete {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 4px;
+}
+
+.neuro-vault-autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.1s;
+}
+
+.neuro-vault-autocomplete-item:hover,
+.neuro-vault-autocomplete-selected {
+  background: var(--background-secondary);
+}
+
+.neuro-vault-autocomplete-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.neuro-vault-autocomplete-path {
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-history-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-primary);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.neuro-vault-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.neuro-vault-history-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.neuro-vault-history-close {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.neuro-vault-history-close:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.neuro-vault-history-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 16px;
+  font-size: 0.85rem;
+}
+
+.neuro-vault-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 4px;
+}
+
+.neuro-vault-history-item:hover {
+  background: var(--background-secondary);
+}
+
+.neuro-vault-history-item-active {
+  background: var(--background-secondary);
+  border-left: 3px solid var(--interactive-accent);
+}
+
+.neuro-vault-history-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.neuro-vault-history-item-title {
+  font-size: 0.85rem;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-history-item-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.neuro-vault-history-item-delete {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.neuro-vault-history-item:hover .neuro-vault-history-item-delete {
+  opacity: 1;
+}
+
+.neuro-vault-history-item-delete:hover {
+  color: var(--text-error);
+  background: var(--background-modifier-error);
+}
+
+.neuro-vault-cost-badge {
+  text-align: right;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  padding: 2px 16px;
+  opacity: 0.6;
+}
+
+.neuro-vault-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+
+.neuro-vault-search-bar input {
+  flex: 1;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+.neuro-vault-search-bar input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.neuro-vault-search-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 60px;
+  text-align: center;
+}
+
+.neuro-vault-search-nav {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.neuro-vault-search-nav:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-search-highlight {
+  background: var(--text-warning);
+  color: var(--background-primary);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.neuro-vault-search-current {
+  background: var(--text-error);
+  color: var(--background-primary);
+}
+
+.neuro-vault-file-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  z-index: 15;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.neuro-vault-file-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-size: 0.7rem;
+}
+
+.neuro-vault-file-preview-path {
+  color: var(--text-accent);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-file-preview-close {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+.neuro-vault-file-preview-close:hover {
+  color: var(--text-normal);
+}
+
+.neuro-vault-file-preview-body {
+  padding: 8px 10px;
+  font-family: var(--font-monospace);
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: 160px;
+  color: var(--text-muted);
+}
+
+.neuro-vault-theme-dark {
+  --nv-bg-primary: #0d1117;
+  --nv-bg-secondary: #161b22;
+  --nv-bg-modifier: #30363d;
+  --nv-text-normal: #e6edf3;
+  --nv-text-muted: #8b949e;
+  --nv-text-accent: #58a6ff;
+  --nv-accent: #238636;
+}
+
+.neuro-vault-theme-dark .neuro-vault-messages { background: var(--nv-bg-primary); }
+.neuro-vault-theme-dark .neuro-vault-message-assistant { background: var(--nv-bg-secondary); border-color: var(--nv-bg-modifier); color: var(--nv-text-normal); }
+.neuro-vault-theme-dark .neuro-vault-message-user { background: var(--nv-accent); }
+.neuro-vault-theme-dark .neuro-vault-input-area { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-dark .neuro-vault-input-area textarea { background: var(--nv-bg-secondary); color: var(--nv-text-normal); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-dark .neuro-vault-sidebar { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+
+.neuro-vault-theme-light {
+  --nv-bg-primary: #ffffff;
+  --nv-bg-secondary: #f6f8fa;
+  --nv-bg-modifier: #d0d7de;
+  --nv-text-normal: #1f2328;
+  --nv-text-muted: #656d76;
+  --nv-text-accent: #0969da;
+  --nv-accent: #2da44e;
+}
+
+.neuro-vault-theme-light .neuro-vault-messages { background: var(--nv-bg-primary); }
+.neuro-vault-theme-light .neuro-vault-message-assistant { background: var(--nv-bg-secondary); border-color: var(--nv-bg-modifier); color: var(--nv-text-normal); }
+.neuro-vault-theme-light .neuro-vault-message-user { background: var(--nv-accent); color: #fff; }
+.neuro-vault-theme-light .neuro-vault-input-area { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-light .neuro-vault-input-area textarea { background: var(--nv-bg-secondary); color: var(--nv-text-normal); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-light .neuro-vault-sidebar { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+
+.neuro-vault-voice-btn {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 8px !important;
+  font-size: 1rem !important;
+  min-width: 38px;
+}
+
+.neuro-vault-voice-btn:hover {
+  background: var(--background-secondary) !important;
+  color: var(--text-normal) !important;
+}
+
+.neuro-vault-voice-active {
+  background: var(--text-error) !important;
+  color: white !important;
+  animation: neuro-vault-pulse 1s infinite;
+}
+
+.nv-hidden { display: none !important; }
+
+.neuro-vault-autocomplete-parent { position: relative; }
+
+@keyframes neuro-vault-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.neuro-vault-compare-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-primary);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.neuro-vault-compare-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.neuro-vault-compare-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-accent);
+}
+
+.neuro-vault-compare-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.neuro-vault-compare-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.neuro-vault-compare-content {
+  line-height: 1.6;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
