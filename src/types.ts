@@ -85,12 +85,40 @@ export const LLM_MODELS: Record<LLMProvider, LLMModel[]> = {
     { modelId: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite", description: "Lightweight." },
   ],
   openrouter: [
-    { modelId: "openai/gpt-5.5", label: "GPT-5.5 (via OR)", description: "Via OpenRouter" },
-    { modelId: "anthropic/claude-opus-4-8-20260514", label: "Claude Opus 4.8 (via OR)", description: "Via OpenRouter" },
-    { modelId: "deepseek/deepseek-v4-pro", label: "DeepSeek V4 Pro (via OR)", description: "Via OpenRouter" },
-    { modelId: "google/gemini-3.5-flash", label: "Gemini 3.5 Flash (via OR)", description: "Via OpenRouter" },
-    { modelId: "xiaomi/mimo-v2.5-pro", label: "MiMo 2.5 Pro (via OR)", description: "Via OpenRouter" },
-    { modelId: "xiaomi/mimo-v2.5", label: "MiMo 2.5 (via OR)", description: "Via OpenRouter" },
+    // Tier 1 - Ultra Económico
+    { modelId: "openai/gpt-5-nano", label: "GPT-5 Nano", description: "Ultra econ. 400K ctx." },
+    { modelId: "qwen/qwen3.5-flash-02-23", label: "Qwen 3.5 Flash", description: "1M ctx. Reasoning." },
+    { modelId: "qwen/qwen3-coder-30b-a3b-instruct", label: "Qwen3 Coder 30B", description: "Código. Tool calling." },
+    { modelId: "mistralai/mistral-small-3.2-24b-instruct", label: "Mistral Small 3.2", description: "Compacto. Tool calling." },
+    { modelId: "qwen/qwen3-32b", label: "Qwen3 32B", description: "Versátil. Código." },
+    { modelId: "google/gemma-3-27b-it", label: "Gemma 3 27B", description: "Open source. Rápido." },
+    { modelId: "qwen/qwen3-235b-a22b-2507", label: "Qwen3 235B", description: "Masivo MoE. Barato." },
+    { modelId: "nvidia/nemotron-3-super-120b-a12b", label: "Nemotron 120B", description: "1M ctx. NVIDIA." },
+    { modelId: "stepfun/step-3.5-flash", label: "Step 3.5 Flash", description: "Cache 78%. Rápido." },
+    { modelId: "deepseek/deepseek-v4-flash", label: "DeepSeek V4 Flash", description: "1M ctx. Cache 80%." },
+    { modelId: "meta-llama/llama-4-scout", label: "Llama 4 Scout", description: "10M ctx! Meta." },
+    { modelId: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", description: "1M ctx. Cache 90%." },
+    { modelId: "google/gemma-4-31b-it", label: "Gemma 4 31B", description: "Open source. 262K ctx." },
+    // Tier 2 - Mejor Relación
+    { modelId: "openai/gpt-4o-mini", label: "GPT-4o Mini", description: "Estándar. Visión." },
+    { modelId: "meta-llama/llama-4-maverick", label: "Llama 4 Maverick", description: "MoE 1M ctx. Código." },
+    { modelId: "anthropic/claude-3-haiku", label: "Claude 3 Haiku", description: "Rápido. Cache 88%." },
+    { modelId: "deepseek/deepseek-r1-distill-qwen-32b", label: "DeepSeek R1 Distill", description: "Reasoning barato." },
+    { modelId: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash", description: "1M ctx. Reasoning." },
+    { modelId: "deepseek/deepseek-v4-pro", label: "DeepSeek V4 Pro", description: "1M ctx. Cache 99%." },
+    { modelId: "xiaomi/mimo-v2.5-pro", label: "MiMo 2.5 Pro", description: "1M ctx. Cache 99%." },
+    // Tier 3 - Premium Accesible
+    { modelId: "mistralai/mistral-large-2512", label: "Mistral Large", description: "Top Mistral. Cache 90%." },
+    { modelId: "deepseek/deepseek-r1", label: "DeepSeek R1", description: "Reasoning profundo." },
+    { modelId: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5", description: "Rápido. Cache 90%." },
+    { modelId: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "Top Google. 1M ctx." },
+    { modelId: "openai/gpt-4o", label: "GPT-4o", description: "Multimodal. Visión." },
+    { modelId: "cohere/command-a", label: "Command A", description: "RAG. Tool calling." },
+    { modelId: "anthropic/claude-sonnet-4.6", label: "Claude Sonnet 4.6", description: "Top Sonnet. Código." },
+    { modelId: "anthropic/claude-sonnet-4.5", label: "Claude Sonnet 4.5", description: "Código complejo." },
+    { modelId: "anthropic/claude-opus-4.8", label: "Claude Opus 4.8", description: "El más capaz." },
+    { modelId: "anthropic/claude-sonnet-4", label: "Claude Sonnet 4", description: "Código. Tool calling." },
+    { modelId: "tencent/hy3-preview", label: "Hunyuan 3 Preview", description: "Reasoning. Multimodal." },
   ],
   grok: [
     { modelId: "grok-4.3", label: "Grok 4.3", description: "Flagship." },
@@ -139,6 +167,12 @@ export interface ChatSession {
   createdAt: number;
 }
 
+export type ASRProvider =
+  | "deepgram"
+  | "assemblyai"
+  | "gladia"
+  | "openrouter";
+
 export interface PluginSettings {
   llmProvider: LLMProvider;
   openaiApiKey: string;
@@ -151,6 +185,7 @@ export interface PluginSettings {
   geminiModel: string;
   openrouterApiKey: string;
   openrouterModel: string;
+  openrouterCustomModels?: LLMModel[];
   grokApiKey: string;
   grokModel: string;
   glmApiKey: string;
@@ -161,7 +196,7 @@ export interface PluginSettings {
   braveApiKey: string;
   tavilyApiKey: string;
   searxngUrl: string;
-  webSearchProvider: "brave" | "tavily" | "searxng";
+  webSearchProvider: "brave" | "tavily" | "searxng" | "duckduckgo";
   pubmedApiKey: string;
   crossrefEmail: string;
   systemPrompt: string;
@@ -171,6 +206,11 @@ export interface PluginSettings {
   flashMode?: boolean;
   agentMode?: "chat" | "agent";
   chatTheme?: "obsidian" | "dark" | "light";
+  asrProvider: ASRProvider;
+  deepgramApiKey: string;
+  assemblyaiApiKey: string;
+  gladiaApiKey: string;
+  asrLanguage: string;
 }
 
 export const API_KEY_FIELDS: Record<LLMProvider, keyof PluginSettings> = {

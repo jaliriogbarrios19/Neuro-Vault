@@ -12,7 +12,7 @@ import "./src/tools/web-search";
 import "./src/tools/academic-search";
 import "./src/tools/audio-transcribe";
 import "./src/tools/pdf-read";
-import { LLMProvider, API_KEY_FIELDS, MODEL_FIELDS, DEFAULT_MODELS, PluginSettings, ChatMessage } from "./src/types";
+import { LLMProvider, LLM_MODELS, API_KEY_FIELDS, MODEL_FIELDS, DEFAULT_MODELS, PluginSettings, ChatMessage } from "./src/types";
 
 export default class NeuroVaultPlugin extends Plugin {
   settings!: PluginSettings;
@@ -46,6 +46,10 @@ export default class NeuroVaultPlugin extends Plugin {
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     setSpobBaseUrl(this.settings.spobBaseUrl || "http://localhost:8080");
+
+    if (this.settings.openrouterCustomModels?.length) {
+      LLM_MODELS.openrouter = this.settings.openrouterCustomModels;
+    }
   }
 
   async saveSettings() {

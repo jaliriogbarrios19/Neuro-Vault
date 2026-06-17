@@ -834,3 +834,53 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.neuro-vault-model-input {
+  background: var(--background-secondary) !important;
+  color: var(--text-normal) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 0.75rem !important;
+  max-width: 200px !important;
+  min-width: 120px !important;
+}
+
+.neuro-vault-model-input:focus {
+  outline: none !important;
+  border-color: var(--interactive-accent) !important;
+}
+
+.neuro-vault-model-name {
+  font-weight: 600;
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+.neuro-vault-model-desc {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.neuro-vault-model-provider {
+  font-size: 0.6rem;
+  color: var(--text-accent);
+  background: var(--background-modifier-accent);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.neuro-vault-model-id {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

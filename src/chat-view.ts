@@ -7,6 +7,7 @@ import { createSidebar, updateIncognitoBtn, updateModeBtn } from "./sidebar";
 import { createHistoryPanel, generateSessionId } from "./history-panel";
 import { StreamHandler } from "./stream-handler";
 import { FileAutocomplete } from "./file-autocomplete";
+import { ModelAutocomplete } from "./model-autocomplete";
 import { ConversationSearch } from "./conversation-search";
 import { VoiceInput } from "./voice-input";
 import { ModelComparison } from "./model-comparison";
@@ -25,9 +26,11 @@ export class ChatView extends ItemView {
   private sidebarEl!: HTMLElement;
   private contentAreaEl!: HTMLElement;
   private fileAutocomplete!: FileAutocomplete;
+  private modelAutocomplete!: ModelAutocomplete;
   private conversationSearch!: ConversationSearch;
   private voiceInput!: VoiceInput;
   private modelComparison!: ModelComparison;
+  private modelInputEl!: HTMLInputElement;
   private lastUserMessage: string | null = null;
   private activeSessionId: string | undefined;
   private incognito = false;
@@ -59,14 +62,26 @@ export class ChatView extends ItemView {
 
     const header = container.createDiv("neuro-vault-chat-header");
     header.createEl("span", { text: "Neuro Vault", cls: "neuro-vault-chat-title" });
-    const modelSelector = header.createEl("select", { cls: "neuro-vault-model-selector" });
-    this.populateModelSelector(modelSelector);
-    modelSelector.addEventListener("change", async () => {
-      const provider = this.plugin.settings.llmProvider;
-      const field = MODEL_FIELDS[provider];
-      (this.plugin.settings as unknown as Record<string, string>)[field] = modelSelector.value;
-      await this.plugin.saveSettings();
+
+    const provider = this.plugin.settings.llmProvider;
+    const models = LLM_MODELS[provider] || [];
+    const current = this.plugin.getModel(provider);
+    const currentModel = models.find((m) => m.modelId === current);
+
+    this.modelInputEl = header.createEl("input", {
+      cls: "neuro-vault-model-input",
+      attr: { placeholder: "Search models...", type: "text", value: currentModel?.label || current },
     });
+
+    const field = MODEL_FIELDS[provider];
+    this.modelAutocomplete = new ModelAutocomplete(
+      this.modelInputEl,
+      models,
+      async (modelId) => {
+        (this.plugin.settings as unknown as Record<string, string>)[field] = modelId;
+        await this.plugin.saveSettings();
+      }
+    );
 
     this.incognito = this.plugin.settings.flashMode || false;
     this.agentMode = this.plugin.settings.agentMode || "agent";
@@ -106,7 +121,7 @@ export class ChatView extends ItemView {
     this.sendBtn = inputArea.createEl("button", { text: "Send" });
     this.sendBtn.addEventListener("click", () => this.handleSend());
     const voiceBtn = inputArea.createEl("button", { text: "\u{1F3A4}", cls: "neuro-vault-voice-btn" });
-    this.voiceInput = new VoiceInput();
+    this.voiceInput = new VoiceInput(this.plugin);
     this.voiceInput.attach(voiceBtn, this.inputEl);
 
     this.containerEl.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -123,9 +138,24 @@ export class ChatView extends ItemView {
     this.engine.abort();
     this.stream.cleanup();
     this.fileAutocomplete.destroy();
+    this.modelAutocomplete.destroy();
     this.conversationSearch.close();
     this.voiceInput.destroy();
     this.modelComparison.close();
+  }
+
+  async onFocus(): Promise<void> {
+    this.refreshModelAutocomplete();
+  }
+
+  private refreshModelAutocomplete(): void {
+    const provider = this.plugin.settings.llmProvider;
+    const models = LLM_MODELS[provider] || [];
+    const current = this.plugin.getModel(provider);
+    const currentModel = models.find((m) => m.modelId === current);
+
+    this.modelInputEl.value = currentModel?.label || current;
+    this.modelAutocomplete.setModels(models);
   }
 
   receiveExternalMessage(text: string): void {
@@ -344,16 +374,5 @@ export class ChatView extends ItemView {
     const el = this.messagesEl;
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 50)
       requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
-  }
-
-  private populateModelSelector(select: HTMLSelectElement): void {
-    const provider = this.plugin.settings.llmProvider;
-    const models = LLM_MODELS[provider] || [];
-    const current = this.plugin.getModel(provider);
-    select.empty();
-    for (const m of models) {
-      const opt = select.createEl("option", { value: m.modelId, text: m.label });
-      if (m.modelId === current) opt.selected = true;
-    }
   }
 }

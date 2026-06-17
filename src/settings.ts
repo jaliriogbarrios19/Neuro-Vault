@@ -1,14 +1,18 @@
-import { App, PluginSettingTab, Setting, TextComponent } from "obsidian";
+import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type NeuroVaultPlugin from "../main";
 import {
   LLMProvider,
   LLM_PROVIDERS,
   LLM_MODELS,
+  LLMModel,
   PluginSettings,
   API_KEY_FIELDS,
   MODEL_FIELDS,
   DEFAULT_MODELS,
+  ASRProvider,
 } from "./types";
+import { fetchOpenRouterModels, mergeOpenRouterModels } from "./openrouter-api";
+import { ModelAutocomplete } from "./model-autocomplete";
 
 let spobBaseUrl = "https://spob-backend.fly.dev";
 let pluginInstance: NeuroVaultPlugin | null = null;
@@ -56,11 +60,17 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   crossrefEmail: "",
   systemPrompt: "",
   chatTheme: "obsidian",
+  asrProvider: "deepgram",
+  deepgramApiKey: "",
+  assemblyaiApiKey: "",
+  gladiaApiKey: "",
+  asrLanguage: "es",
 };
 
 export class SettingsTab extends PluginSettingTab {
   plugin: NeuroVaultPlugin;
   private saveTimeout: number | null = null;
+  private modelAutocomplete?: ModelAutocomplete;
 
   constructor(app: App, plugin: NeuroVaultPlugin) {
     super(app, plugin);
@@ -116,28 +126,67 @@ export class SettingsTab extends PluginSettingTab {
     const models = LLM_MODELS[provider];
     if (models && models.length > 0) {
       const modelField = MODEL_FIELDS[provider];
-      new Setting(containerEl)
+      const current =
+        String(
+          (this.plugin.settings as unknown as Record<string, string>)[
+            modelField
+          ]
+        ) || DEFAULT_MODELS[provider];
+      const currentModel = models.find((m) => m.modelId === current);
+
+      const modelSetting = new Setting(containerEl)
         .setName("Model")
         .setDesc("AI model for chat")
-        .addDropdown((dropdown) => {
-          for (const m of models) {
-            dropdown.addOption(m.modelId, `${m.label} — ${m.description}`);
+        .addText((text) => {
+          text
+            .setPlaceholder("Search models...")
+            .setValue(currentModel?.label || current)
+            .onChange(() => {});
+          text.inputEl.addClass("neuro-vault-model-input");
+
+          const autocomplete = new ModelAutocomplete(
+            text.inputEl,
+            models,
+            async (modelId) => {
+              (this.plugin.settings as unknown as Record<string, string>)[modelField] = modelId;
+              await this.plugin.saveSettings();
+            }
+          );
+
+          if (provider === "openrouter") {
+            this.modelAutocomplete = autocomplete;
           }
-          const current =
-            String(
-              (this.plugin.settings as unknown as Record<string, string>)[
-                modelField
-              ]
-            ) || DEFAULT_MODELS[provider];
-          dropdown
-            .setValue(current)
-            .onChange((v: string) => {
-              (
-                this.plugin.settings as unknown as Record<string, string>
-              )[modelField] = v;
-              this.debouncedSave();
-            });
         });
+
+      if (provider === "openrouter") {
+        modelSetting.addButton((btn) =>
+          btn
+            .setButtonText("Import from OpenRouter")
+            .setCta()
+            .onClick(async () => {
+              const apiKey = this.plugin.settings.openrouterApiKey;
+              if (!apiKey) {
+                new Notice("Set your OpenRouter API key first");
+                return;
+              }
+              btn.setButtonText("Fetching...").setDisabled(true);
+              try {
+                const fetched = await fetchOpenRouterModels(apiKey);
+                const curated = LLM_MODELS.openrouter;
+                const merged = mergeOpenRouterModels(curated, fetched);
+                LLM_MODELS.openrouter = merged;
+                this.plugin.settings.openrouterCustomModels = merged;
+                await this.plugin.saveSettings();
+                new Notice(`Imported ${fetched.length} models from OpenRouter`);
+                this.display();
+              } catch (e) {
+                new Notice(`Error: ${e instanceof Error ? e.message : String(e)}`);
+              } finally {
+                btn.setButtonText("Import from OpenRouter").setDisabled(false);
+              }
+            })
+        );
+      }
     }
 
     if (provider === "spob") {
@@ -164,10 +213,11 @@ export class SettingsTab extends PluginSettingTab {
         dropdown.addOption("brave", "Brave Search");
         dropdown.addOption("tavily", "Tavily");
         dropdown.addOption("searxng", "SearXNG");
+        dropdown.addOption("duckduckgo", "DuckDuckGo (free, no API key)");
         dropdown
           .setValue(this.plugin.settings.webSearchProvider)
           .onChange(async (v) => {
-            this.plugin.settings.webSearchProvider = v as "brave" | "tavily" | "searxng";
+            this.plugin.settings.webSearchProvider = v as "brave" | "tavily" | "searxng" | "duckduckgo";
             await this.plugin.saveSettings();
             this.display();
           });
@@ -247,6 +297,100 @@ export class SettingsTab extends PluginSettingTab {
             this.debouncedSave();
           });
       });
+
+    new Setting(containerEl).setName("Voice Input (ASR)").setHeading();
+
+    new Setting(containerEl)
+      .setName("ASR Provider")
+      .setDesc("Provider for voice-to-text transcription")
+      .addDropdown((dropdown) => {
+        dropdown.addOption("deepgram", "Deepgram");
+        dropdown.addOption("assemblyai", "AssemblyAI");
+        dropdown.addOption("gladia", "Gladia");
+        dropdown.addOption("openrouter", "OpenRouter (MAI Transcribe)");
+        dropdown
+          .setValue(this.plugin.settings.asrProvider)
+          .onChange(async (v) => {
+            this.plugin.settings.asrProvider = v as ASRProvider;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
+
+    const asrProvider = this.plugin.settings.asrProvider;
+
+    if (asrProvider === "deepgram") {
+      new Setting(containerEl)
+        .setName("Deepgram API Key")
+        .setDesc("Free tier: https://console.deepgram.com/signup")
+        .addText((text) => {
+          text.setPlaceholder("Enter API key").setValue(this.plugin.settings.deepgramApiKey);
+          text.inputEl.type = "password";
+          this.addToggleBtn(text);
+          text.onChange((value) => {
+            this.plugin.settings.deepgramApiKey = value;
+            this.debouncedSave();
+          });
+        });
+    }
+
+    if (asrProvider === "assemblyai") {
+      new Setting(containerEl)
+        .setName("AssemblyAI API Key")
+        .setDesc("Free tier: https://www.assemblyai.com/dashboard")
+        .addText((text) => {
+          text.setPlaceholder("Enter API key").setValue(this.plugin.settings.assemblyaiApiKey);
+          text.inputEl.type = "password";
+          this.addToggleBtn(text);
+          text.onChange((value) => {
+            this.plugin.settings.assemblyaiApiKey = value;
+            this.debouncedSave();
+          });
+        });
+    }
+
+    if (asrProvider === "gladia") {
+      new Setting(containerEl)
+        .setName("Gladia API Key")
+        .setDesc("Free tier: https://gladia.io")
+        .addText((text) => {
+          text.setPlaceholder("Enter API key").setValue(this.plugin.settings.gladiaApiKey);
+          text.inputEl.type = "password";
+          this.addToggleBtn(text);
+          text.onChange((value) => {
+            this.plugin.settings.gladiaApiKey = value;
+            this.debouncedSave();
+          });
+        });
+    }
+
+    if (asrProvider === "openrouter") {
+      new Setting(containerEl)
+        .setName("ASR Language")
+        .setDesc("Language for transcription (ISO 639-1 code)")
+        .addText((text) => {
+          text
+            .setPlaceholder("es")
+            .setValue(this.plugin.settings.asrLanguage)
+            .onChange((value) => {
+              this.plugin.settings.asrLanguage = value;
+              this.debouncedSave();
+            });
+        });
+    } else {
+      new Setting(containerEl)
+        .setName("ASR Language")
+        .setDesc("Language for transcription (ISO 639-1 code, e.g. es, en)")
+        .addText((text) => {
+          text
+            .setPlaceholder("es")
+            .setValue(this.plugin.settings.asrLanguage)
+            .onChange((value) => {
+              this.plugin.settings.asrLanguage = value;
+              this.debouncedSave();
+            });
+        });
+    }
 
     new Setting(containerEl).setName("System Prompt").setHeading();
 
