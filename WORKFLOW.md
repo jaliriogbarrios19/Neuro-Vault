@@ -118,3 +118,33 @@ Ver sección anterior del git log. Resumen: rendering pipeline, strip markdown, 
 - **Tests**: `npm test` — 9 tests, 2 archivos
 - **Typecheck**: `npx tsc --noEmit` — ✅ limpio
 - **Límite de líneas**: chat-view.ts (326) y settings.ts (326) están sobre el límite de 300. settings.ts ya estaba sobre el límite antes. chat-view.ts se extrajo chat-actions.ts y session-manager.ts pero sigue siendo el archivo principal.
+
+---
+
+## Sesión 3: Fecha dinámica, review bot compliance, MiMo, GitHub
+
+### Fix: Fecha dinámica en system prompt (chat-engine.ts)
+- **Problema**: El modelo no sabe qué día es — no puede responder preguntas temporales.
+- **Fix**: `buildSystemPrompt()` inyecta `Today's date is <fecha>` al system prompt. Se regenera en cada `reset()` con la fecha actual. `basePrompt` se guarda separado para no duplicar.
+- **Resultado**: El modelo siempre tiene contexto temporal correcto.
+
+### Fix: Obsidian review bot compliance
+- **Problema**: El bot rechaza `createEl("h2"/"h3")`, `getRightLeaf(false)`, y `.style.display = ...`.
+- **Fix**:
+  - Headings → `new Setting().setName().setHeading()` (settings.ts, 5 headings)
+  - `getRightLeaf(false)` → `workspace.getLeaf(true)` (main.ts, mobile compat)
+  - `.style.display` → clases CSS `.nv-hidden` + `toggleClass`/`addClass`/`removeClass`
+  - `.style.height` dinámico → `setCssProps({ "--nv-h": value })` + CSS `height: var(--nv-h)`
+- **Resultado**: Limpio para review del bot. `fetch()` para SSE streaming es aceptable (requestUrl no soporta ReadableStream).
+
+### Feat: Modelos MiMo en OpenRouter (types.ts)
+- Agregados `xiaomi/mimo-v2.5-pro` y `xiaomi/mimo-v2.5` a la lista de OpenRouter.
+
+### Infra: Git + GitHub
+- Inicializado repositorio git en el directorio del proyecto.
+- Remote: `https://github.com/jaliriogbarrios19/Neuro-Vault`
+- Branch: `main`
+- Commits: initial (50 archivos, 7659 líneas) + MiMo models (1 archivo, +2 líneas)
+- Builds copiados a:
+  - `D:\Neuro Vault test\Neuro Vault Test\.obsidian\plugins\neuro-vault\`
+  - `D:\Obsidian Files\Jesús\.obsidian\plugins\neuro-vault\`
