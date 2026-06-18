@@ -171,7 +171,7 @@ export type ASRProvider =
   | "deepgram"
   | "assemblyai"
   | "gladia"
-  | "openrouter";
+  | "groq";
 
 export interface PluginSettings {
   llmProvider: LLMProvider;
@@ -210,7 +210,9 @@ export interface PluginSettings {
   deepgramApiKey: string;
   assemblyaiApiKey: string;
   gladiaApiKey: string;
+  groqApiKey: string;
   asrLanguage: string;
+  dictateCleanupPrompt: string;
 }
 
 export const API_KEY_FIELDS: Record<LLMProvider, keyof PluginSettings> = {

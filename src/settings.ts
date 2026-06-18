@@ -64,7 +64,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   deepgramApiKey: "",
   assemblyaiApiKey: "",
   gladiaApiKey: "",
+  groqApiKey: "",
   asrLanguage: "es",
+  dictateCleanupPrompt: "You are a voice-to-text formatter. Clean up this voice transcription into proper written text. Fix punctuation, capitalization, and grammar. Remove filler words (um, uh, like, you know, o sea, eh, bueno, este). Format into clear paragraphs if the text is long enough. Keep the original meaning and tone exactly. Do not add content that was not spoken. Do not add commentary, explanations, or headers. Output only the cleaned text, nothing else.",
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -83,6 +85,8 @@ export class SettingsTab extends PluginSettingTab {
       this.plugin.saveSettings();
       this.saveTimeout = null;
     }
+    const chatView = this.plugin.getActiveChatView();
+    if (chatView) chatView.refreshFromSettings();
   }
 
   private debouncedSave(): void {
@@ -137,19 +141,16 @@ export class SettingsTab extends PluginSettingTab {
       const modelSetting = new Setting(containerEl)
         .setName("Model")
         .setDesc("AI model for chat")
-        .addText((text) => {
-          text
-            .setPlaceholder("Search models...")
-            .setValue(currentModel?.label || current)
-            .onChange(() => {});
-          text.inputEl.addClass("neuro-vault-model-input");
-
+        .addButton((btn) => {
+          btn.setButtonText(currentModel?.label || current);
           const autocomplete = new ModelAutocomplete(
-            text.inputEl,
+            btn.buttonEl,
             models,
             async (modelId) => {
               (this.plugin.settings as unknown as Record<string, string>)[modelField] = modelId;
               await this.plugin.saveSettings();
+              const updated = models.find((m) => m.modelId === modelId);
+              btn.setButtonText(updated?.label || modelId);
             }
           );
 
@@ -307,7 +308,7 @@ export class SettingsTab extends PluginSettingTab {
         dropdown.addOption("deepgram", "Deepgram");
         dropdown.addOption("assemblyai", "AssemblyAI");
         dropdown.addOption("gladia", "Gladia");
-        dropdown.addOption("openrouter", "OpenRouter (MAI Transcribe)");
+        dropdown.addOption("groq", "Groq (Whisper)");
         dropdown
           .setValue(this.plugin.settings.asrProvider)
           .onChange(async (v) => {
@@ -364,33 +365,33 @@ export class SettingsTab extends PluginSettingTab {
         });
     }
 
-    if (asrProvider === "openrouter") {
+    if (asrProvider === "groq") {
       new Setting(containerEl)
-        .setName("ASR Language")
-        .setDesc("Language for transcription (ISO 639-1 code)")
+        .setName("Groq API Key")
+        .setDesc("Free: https://console.groq.com")
         .addText((text) => {
-          text
-            .setPlaceholder("es")
-            .setValue(this.plugin.settings.asrLanguage)
-            .onChange((value) => {
-              this.plugin.settings.asrLanguage = value;
-              this.debouncedSave();
-            });
-        });
-    } else {
-      new Setting(containerEl)
-        .setName("ASR Language")
-        .setDesc("Language for transcription (ISO 639-1 code, e.g. es, en)")
-        .addText((text) => {
-          text
-            .setPlaceholder("es")
-            .setValue(this.plugin.settings.asrLanguage)
-            .onChange((value) => {
-              this.plugin.settings.asrLanguage = value;
-              this.debouncedSave();
-            });
+          text.setPlaceholder("Enter API key").setValue(this.plugin.settings.groqApiKey);
+          text.inputEl.type = "password";
+          this.addToggleBtn(text);
+          text.onChange((value) => {
+            this.plugin.settings.groqApiKey = value;
+            this.debouncedSave();
+          });
         });
     }
+
+    new Setting(containerEl)
+      .setName("ASR Language")
+      .setDesc("Language for transcription (ISO 639-1 code, e.g. es, en)")
+      .addText((text) => {
+        text
+          .setPlaceholder("es")
+          .setValue(this.plugin.settings.asrLanguage)
+          .onChange((value) => {
+            this.plugin.settings.asrLanguage = value;
+            this.debouncedSave();
+          });
+      });
 
     new Setting(containerEl).setName("System Prompt").setHeading();
 
@@ -403,6 +404,20 @@ export class SettingsTab extends PluginSettingTab {
           .setValue(this.plugin.settings.systemPrompt)
           .onChange((value) => {
             this.plugin.settings.systemPrompt = value;
+            this.debouncedSave();
+          });
+        text.inputEl.rows = 4;
+      });
+
+    new Setting(containerEl)
+      .setName("Dictate Cleanup Prompt")
+      .setDesc("Prompt used to clean up voice transcriptions into written text. Leave empty for default.")
+      .addTextArea((text) => {
+        text
+          .setPlaceholder("Default: Clean up transcription, fix grammar, remove fillers...")
+          .setValue(this.plugin.settings.dictateCleanupPrompt)
+          .onChange((value) => {
+            this.plugin.settings.dictateCleanupPrompt = value;
             this.debouncedSave();
           });
         text.inputEl.rows = 4;

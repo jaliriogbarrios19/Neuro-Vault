@@ -10,7 +10,9 @@ export class DeepgramTranscriber implements VoiceTranscriber {
   ): Promise<string> {
     const params = new URLSearchParams({
       smart_format: "true",
-      model: "nova-3",
+      model: options.model || "nova-3",
+      diarize_model: "latest",
+      utterances: "true",
     });
 
     if (options.language) {
@@ -31,13 +33,19 @@ export class DeepgramTranscriber implements VoiceTranscriber {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => null);
+      const err = await res.json().catch(() => null) as { err_msg?: string } | null;
       throw new Error(
         `Deepgram failed (${res.status}): ${err?.err_msg ?? "unknown"}`
       );
     }
 
-    const data = await res.json();
+    const data = await res.json() as DeepgramResponse;
+    const utterances = data.results?.utterances;
+
+    if (utterances && utterances.length > 0) {
+      return utterances.map((u) => u.transcript?.trim() ?? "").join(" ");
+    }
+
     const channels = data.results?.channels;
     if (!channels || channels.length === 0) {
       throw new Error("Deepgram returned no results");
@@ -45,4 +53,20 @@ export class DeepgramTranscriber implements VoiceTranscriber {
 
     return channels[0]?.alternatives?.[0]?.transcript ?? "";
   }
+}
+
+interface DeepgramUtterance {
+  speaker?: number;
+  transcript?: string;
+  start?: number;
+  end?: number;
+}
+
+interface DeepgramResponse {
+  results?: {
+    utterances?: DeepgramUtterance[];
+    channels?: Array<{
+      alternatives?: Array<{ transcript?: string }>;
+    }>;
+  };
 }

@@ -2,13 +2,13 @@ import type { ASRProvider, ASRProviderMeta, VoiceTranscriber } from "./types";
 import { DeepgramTranscriber } from "./deepgram";
 import { AssemblyAITranscriber } from "./assemblyai";
 import { GladiaTranscriber } from "./gladia";
-import { OpenRouterTranscriber } from "./openrouter";
+import { GroqTranscriber } from "./groq";
 
 export const ASR_PROVIDERS: { value: ASRProvider; label: string }[] = [
   { value: "deepgram", label: "Deepgram" },
   { value: "assemblyai", label: "AssemblyAI" },
   { value: "gladia", label: "Gladia" },
-  { value: "openrouter", label: "OpenRouter (MAI Transcribe)" },
+  { value: "groq", label: "Groq (Whisper)" },
 ];
 
 export const ASR_REGISTRY: Record<ASRProvider, ASRProviderMeta> = {
@@ -33,12 +33,11 @@ export const ASR_REGISTRY: Record<ASRProvider, ASRProviderMeta> = {
     apiKeyField: "gladiaApiKey",
     requiresApiKey: true,
   },
-  openrouter: {
-    id: "openrouter",
-    label: "OpenRouter (MAI Transcribe)",
-    transcriber: new OpenRouterTranscriber(),
-    apiKeyField: "openrouterApiKey",
-    modelField: "openrouterModel",
+  groq: {
+    id: "groq",
+    label: "Groq (Whisper)",
+    transcriber: new GroqTranscriber(),
+    apiKeyField: "groqApiKey",
     requiresApiKey: true,
   },
 };

@@ -17,7 +17,7 @@ export type ASRProvider =
   | "deepgram"
   | "assemblyai"
   | "gladia"
-  | "openrouter";
+  | "groq";
 
 export interface ASRProviderMeta {
   id: ASRProvider;

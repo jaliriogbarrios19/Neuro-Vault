@@ -27,10 +27,10 @@ export class ChatView extends ItemView {
   private contentAreaEl!: HTMLElement;
   private fileAutocomplete!: FileAutocomplete;
   private modelAutocomplete!: ModelAutocomplete;
+  private modelsBtnEl!: HTMLButtonElement;
   private conversationSearch!: ConversationSearch;
   private voiceInput!: VoiceInput;
   private modelComparison!: ModelComparison;
-  private modelInputEl!: HTMLInputElement;
   private lastUserMessage: string | null = null;
   private activeSessionId: string | undefined;
   private incognito = false;
@@ -62,26 +62,6 @@ export class ChatView extends ItemView {
 
     const header = container.createDiv("neuro-vault-chat-header");
     header.createEl("span", { text: "Neuro Vault", cls: "neuro-vault-chat-title" });
-
-    const provider = this.plugin.settings.llmProvider;
-    const models = LLM_MODELS[provider] || [];
-    const current = this.plugin.getModel(provider);
-    const currentModel = models.find((m) => m.modelId === current);
-
-    this.modelInputEl = header.createEl("input", {
-      cls: "neuro-vault-model-input",
-      attr: { placeholder: "Search models...", type: "text", value: currentModel?.label || current },
-    });
-
-    const field = MODEL_FIELDS[provider];
-    this.modelAutocomplete = new ModelAutocomplete(
-      this.modelInputEl,
-      models,
-      async (modelId) => {
-        (this.plugin.settings as unknown as Record<string, string>)[field] = modelId;
-        await this.plugin.saveSettings();
-      }
-    );
 
     this.incognito = this.plugin.settings.flashMode || false;
     this.agentMode = this.plugin.settings.agentMode || "agent";
@@ -124,6 +104,21 @@ export class ChatView extends ItemView {
     this.voiceInput = new VoiceInput(this.plugin);
     this.voiceInput.attach(voiceBtn, this.inputEl);
 
+    const provider = this.plugin.settings.llmProvider;
+    const models = LLM_MODELS[provider] || [];
+    this.modelsBtnEl = inputArea.createEl("button", { cls: "neuro-vault-models-btn" });
+    this.updateModelsBtnLabel();
+    this.modelAutocomplete = new ModelAutocomplete(
+      this.modelsBtnEl,
+      models,
+      async (modelId) => {
+        const field = MODEL_FIELDS[this.plugin.settings.llmProvider];
+        (this.plugin.settings as unknown as Record<string, string>)[field] = modelId;
+        await this.plugin.saveSettings();
+        this.updateModelsBtnLabel();
+      }
+    );
+
     this.containerEl.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "Escape" && this.engine.isRunning()) { this.abort(); }
       if (e.ctrlKey && e.key === "n") { e.preventDefault(); this.newChat(); }
@@ -145,17 +140,28 @@ export class ChatView extends ItemView {
   }
 
   async onFocus(): Promise<void> {
-    this.refreshModelAutocomplete();
+    this.refreshFromSettings();
   }
 
-  private refreshModelAutocomplete(): void {
+  refreshFromSettings(): void {
     const provider = this.plugin.settings.llmProvider;
     const models = LLM_MODELS[provider] || [];
-    const current = this.plugin.getModel(provider);
-    const currentModel = models.find((m) => m.modelId === current);
-
-    this.modelInputEl.value = currentModel?.label || current;
     this.modelAutocomplete.setModels(models);
+    this.updateModelsBtnLabel();
+  }
+
+  private getModelLabel(): string {
+    const provider = this.plugin.settings.llmProvider;
+    const modelId = this.plugin.getModel(provider);
+    const models = LLM_MODELS[provider] || [];
+    const model = models.find((m) => m.modelId === modelId);
+    return model?.label || modelId;
+  }
+
+  private updateModelsBtnLabel(): void {
+    if (this.modelsBtnEl) {
+      this.modelsBtnEl.setText(this.getModelLabel());
+    }
   }
 
   receiveExternalMessage(text: string): void {

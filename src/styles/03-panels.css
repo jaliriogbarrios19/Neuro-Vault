@@ -1,0 +1,369 @@
+.neuro-vault-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-right: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  min-width: 40px;
+}
+
+.neuro-vault-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.neuro-vault-sidebar-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-sidebar-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.neuro-vault-incognito-btn.neuro-vault-incognito-active {
+  color: var(--text-warning);
+  background: var(--background-modifier-warning);
+}
+
+.neuro-vault-mode-btn.neuro-vault-mode-agent {
+  color: var(--text-accent);
+  background: var(--background-modifier-accent);
+}
+
+.neuro-vault-autocomplete {
+  position: fixed;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  max-height: 340px;
+  z-index: 100;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.neuro-vault-model-search {
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 0.8rem;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.neuro-vault-model-search:focus {
+  border-bottom-color: var(--interactive-accent);
+}
+
+.neuro-vault-autocomplete-list {
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+.neuro-vault-autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.1s;
+}
+
+.neuro-vault-autocomplete-item:hover,
+.neuro-vault-autocomplete-selected {
+  background: var(--background-secondary);
+}
+
+.neuro-vault-autocomplete-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.neuro-vault-autocomplete-path {
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-history-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-primary);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.neuro-vault-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.neuro-vault-history-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.neuro-vault-history-close {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.neuro-vault-history-close:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.neuro-vault-history-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 16px;
+  font-size: 0.85rem;
+}
+
+.neuro-vault-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 4px;
+}
+
+.neuro-vault-history-item:hover {
+  background: var(--background-secondary);
+}
+
+.neuro-vault-history-item-active {
+  background: var(--background-secondary);
+  border-left: 3px solid var(--interactive-accent);
+}
+
+.neuro-vault-history-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.neuro-vault-history-item-title {
+  font-size: 0.85rem;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-history-item-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.neuro-vault-history-item-delete {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.neuro-vault-history-item:hover .neuro-vault-history-item-delete {
+  opacity: 1;
+}
+
+.neuro-vault-history-item-delete:hover {
+  color: var(--text-error);
+  background: var(--background-modifier-error);
+}
+
+.neuro-vault-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+
+.neuro-vault-search-bar input {
+  flex: 1;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+.neuro-vault-search-bar input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.neuro-vault-search-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 60px;
+  text-align: center;
+}
+
+.neuro-vault-search-nav {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.neuro-vault-search-nav:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.neuro-vault-search-highlight {
+  background: var(--text-warning);
+  color: var(--background-primary);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.neuro-vault-search-current {
+  background: var(--text-error);
+  color: var(--background-primary);
+}
+
+.neuro-vault-file-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  z-index: 15;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.neuro-vault-file-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-size: 0.7rem;
+}
+
+.neuro-vault-file-preview-path {
+  color: var(--text-accent);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neuro-vault-file-preview-close {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+.neuro-vault-file-preview-close:hover {
+  color: var(--text-normal);
+}
+
+.neuro-vault-file-preview-body {
+  padding: 8px 10px;
+  font-family: var(--font-monospace);
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: 160px;
+  color: var(--text-muted);
+}
+
+.neuro-vault-compare-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-primary);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.neuro-vault-compare-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.neuro-vault-compare-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-accent);
+}
+
+.neuro-vault-compare-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.neuro-vault-compare-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.neuro-vault-compare-content {
+  line-height: 1.6;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

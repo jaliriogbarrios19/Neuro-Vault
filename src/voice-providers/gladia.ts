@@ -21,13 +21,14 @@ export class GladiaTranscriber implements VoiceTranscriber {
     });
 
     if (!uploadRes.ok) {
-      const err = await uploadRes.json().catch(() => null);
+      const err = await uploadRes.json().catch(() => null) as { message?: string } | null;
       throw new Error(
         `Gladia upload failed (${uploadRes.status}): ${err?.message ?? "unknown"}`
       );
     }
 
-    const { audio_url: audioUrl } = await uploadRes.json();
+    const uploadData = await uploadRes.json() as { audio_url: string };
+    const audioUrl = uploadData.audio_url;
 
     const transcribeRes = await fetch(`${baseUrl}/pre-recorded`, {
       method: "POST",
@@ -37,6 +38,8 @@ export class GladiaTranscriber implements VoiceTranscriber {
       },
       body: JSON.stringify({
         audio_url: audioUrl,
+        model: options.model || "solaria-3",
+        diarization: true,
         language_config: {
           languages: [options.language || "es"],
         },
@@ -45,15 +48,14 @@ export class GladiaTranscriber implements VoiceTranscriber {
     });
 
     if (!transcribeRes.ok) {
-      const err = await transcribeRes.json().catch(() => null);
+      const err = await transcribeRes.json().catch(() => null) as { message?: string } | null;
       throw new Error(
         `Gladia transcription failed (${transcribeRes.status}): ${err?.message ?? "unknown"}`
       );
     }
 
-    const { result_url: resultUrl } = await transcribeRes.json();
-
-    return this.poll(resultUrl, apiKey, options.signal);
+    const transcribeData = await transcribeRes.json() as { result_url: string };
+    return this.poll(transcribeData.result_url, apiKey, options.signal);
   }
 
   private async poll(
@@ -61,7 +63,7 @@ export class GladiaTranscriber implements VoiceTranscriber {
     apiKey: string,
     signal?: AbortSignal
   ): Promise<string> {
-    const maxAttempts = 60;
+    const maxAttempts = 120;
     for (let i = 0; i < maxAttempts; i++) {
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
@@ -74,20 +76,38 @@ export class GladiaTranscriber implements VoiceTranscriber {
         throw new Error(`Gladia polling failed (${res.status})`);
       }
 
-      const data = await res.json();
+      const data = await res.json() as GladiaResult;
 
       if (data.status === "done") {
         const utterances = data.result?.transcription?.utterances ?? [];
-        return utterances.map((u: { text: string }) => u.text).join(" ");
+        if (utterances.length > 0) {
+          return utterances.map((u) => u.text.trim()).join(" ");
+        }
+        return data.result?.transcription?.full_transcript ?? "";
       }
 
       if (data.status === "error") {
         throw new Error("Gladia transcription failed");
       }
 
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => window.setTimeout(r, 1000));
     }
 
     throw new Error("Gladia transcription timed out");
   }
+}
+
+interface GladiaResult {
+  status: string;
+  result?: {
+    transcription?: {
+      full_transcript?: string;
+      utterances?: Array<{
+        speaker: number;
+        text: string;
+        start: number;
+        end: number;
+      }>;
+    };
+  };
 }

@@ -1,0 +1,174 @@
+.neuro-vault-theme-dark {
+  --nv-bg-primary: #0d1117;
+  --nv-bg-secondary: #161b22;
+  --nv-bg-modifier: #30363d;
+  --nv-text-normal: #e6edf3;
+  --nv-text-muted: #8b949e;
+  --nv-text-accent: #58a6ff;
+  --nv-accent: #238636;
+}
+
+.neuro-vault-theme-dark .neuro-vault-messages { background: var(--nv-bg-primary); }
+.neuro-vault-theme-dark .neuro-vault-message-assistant { background: var(--nv-bg-secondary); border-color: var(--nv-bg-modifier); color: var(--nv-text-normal); }
+.neuro-vault-theme-dark .neuro-vault-message-user { background: var(--nv-accent); }
+.neuro-vault-theme-dark .neuro-vault-input-area { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-dark .neuro-vault-input-area textarea { background: var(--nv-bg-secondary); color: var(--nv-text-normal); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-dark .neuro-vault-sidebar { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+
+.neuro-vault-theme-light {
+  --nv-bg-primary: #ffffff;
+  --nv-bg-secondary: #f6f8fa;
+  --nv-bg-modifier: #d0d7de;
+  --nv-text-normal: #1f2328;
+  --nv-text-muted: #656d76;
+  --nv-text-accent: #0969da;
+  --nv-accent: #2da44e;
+}
+
+.neuro-vault-theme-light .neuro-vault-messages { background: var(--nv-bg-primary); }
+.neuro-vault-theme-light .neuro-vault-message-assistant { background: var(--nv-bg-secondary); border-color: var(--nv-bg-modifier); color: var(--nv-text-normal); }
+.neuro-vault-theme-light .neuro-vault-message-user { background: var(--nv-accent); color: #fff; }
+.neuro-vault-theme-light .neuro-vault-input-area { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-light .neuro-vault-input-area textarea { background: var(--nv-bg-secondary); color: var(--nv-text-normal); border-color: var(--nv-bg-modifier); }
+.neuro-vault-theme-light .neuro-vault-sidebar { background: var(--nv-bg-primary); border-color: var(--nv-bg-modifier); }
+
+.neuro-vault-voice-btn {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 8px !important;
+  font-size: 1rem !important;
+  min-width: 38px;
+}
+
+.neuro-vault-voice-btn:hover {
+  background: var(--background-secondary) !important;
+  color: var(--text-normal) !important;
+}
+
+.neuro-vault-models-btn {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 8px 10px !important;
+  font-size: 0.75rem !important;
+  white-space: nowrap;
+}
+
+.neuro-vault-models-btn:hover {
+  background: var(--background-secondary) !important;
+  color: var(--text-normal) !important;
+}
+
+.neuro-vault-voice-active {
+  background: var(--text-error) !important;
+  color: white !important;
+  animation: neuro-vault-pulse 1s infinite;
+}
+
+@keyframes neuro-vault-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.neuro-vault-cost-badge {
+  text-align: right;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  padding: 2px 16px;
+  opacity: 0.6;
+}
+
+.neuro-vault-model-name {
+  font-weight: 600;
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+.neuro-vault-model-desc {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.neuro-vault-model-provider {
+  font-size: 0.6rem;
+  color: var(--text-accent);
+  background: var(--background-modifier-accent);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.neuro-vault-model-id {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.neuro-vault-dictate {
+  text-align: center;
+}
+
+.neuro-vault-dictate-status {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  min-height: 24px;
+}
+
+.neuro-vault-dictate-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.neuro-vault-dictate-record {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.neuro-vault-dictate-record:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.neuro-vault-dictate-record:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.neuro-vault-dictate-recording {
+  background: var(--text-error) !important;
+  animation: neuro-vault-pulse 1s infinite;
+}
+
+.neuro-vault-dictate-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.neuro-vault-dictate-cancel:hover {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}

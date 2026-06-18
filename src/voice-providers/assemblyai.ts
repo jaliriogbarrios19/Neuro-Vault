@@ -38,8 +38,8 @@ export class AssemblyAITranscriber implements VoiceTranscriber {
       },
       body: JSON.stringify({
         audio_url: audioUrl,
+        speech_models: [options.model || "universal-3-pro"],
         language_code: options.language || "es",
-        model: options.model || "best",
       }),
       signal: options.signal,
     });
@@ -82,7 +82,7 @@ export class AssemblyAITranscriber implements VoiceTranscriber {
         throw new Error(`AssemblyAI error: ${data.error ?? "unknown"}`);
       }
 
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => window.setTimeout(r, 1000));
     }
 
     throw new Error("AssemblyAI transcription timed out");

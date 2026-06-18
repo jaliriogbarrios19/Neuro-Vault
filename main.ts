@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, Editor, MarkdownView } from "obsidian";
 import {
   DEFAULT_SETTINGS,
   SettingsTab,
@@ -6,6 +6,7 @@ import {
   setPluginInstance,
 } from "./src/settings";
 import { ChatView, VIEW_TYPE_CHAT } from "./src/chat-view";
+import { DictateModal } from "./src/dictate-modal";
 import "./src/tools/echo";
 import "./src/tools/vault-ops";
 import "./src/tools/web-search";
@@ -37,6 +38,27 @@ export default class NeuroVaultPlugin extends Plugin {
       name: "Open Neuro Vault Chat",
       callback: () => this.activateChat(),
     });
+
+    this.addCommand({
+      id: "dictate-to-note",
+      name: "Dictate to note",
+      editorCallback: (editor: Editor) => {
+        new DictateModal(this.app, this, editor).open();
+      },
+    });
+
+    this.registerEvent(
+      this.app.workspace.on("editor-menu", (menu, editor) => {
+        menu.addItem((item) => {
+          item
+            .setTitle("Dictate with Neuro Vault")
+            .setIcon("mic")
+            .onClick(() => {
+              new DictateModal(this.app, this, editor).open();
+            });
+        });
+      })
+    );
   }
 
   onunload() {
@@ -78,7 +100,7 @@ export default class NeuroVaultPlugin extends Plugin {
     const view = this.getActiveChatView();
     if (!view) {
       await this.activateChat();
-      setTimeout(() => {
+      window.setTimeout(() => {
         const v = this.getActiveChatView();
         if (v) v.receiveExternalMessage(text);
       }, 300);
