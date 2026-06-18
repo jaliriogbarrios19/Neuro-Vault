@@ -148,3 +148,77 @@ Ver sección anterior del git log. Resumen: rendering pipeline, strip markdown, 
 - Builds copiados a:
   - `D:\Neuro Vault test\Neuro Vault Test\.obsidian\plugins\neuro-vault\`
   - `D:\Obsidian Files\Jesús\.obsidian\plugins\neuro-vault\`
+
+---
+
+## Sesión 4: Dictate, model selector fix, ASR overhaul
+
+### Feat: Dictate to Note — Wispr Flow para Obsidian
+- **Concepto**: Voz → Transcripción → LLM cleanup → Inserta en nota. Como Wispr Flow pero dentro de Obsidian.
+- **Trigger**: Click derecho en nota → "Dictate with Neuro Vault" + Command Palette → "Dictate to note"
+- **Pipeline**: graba mic → transcribe con ASR provider configurado → LLM limpia/formatea → inserta en cursor
+- **Prompt de cleanup**: Default configurable en Settings. Elimina muletillas EN/ES, corrige puntuación, formato de párrafos.
+- **Archivos**: `src/dictate-modal.ts` (nuevo), `main.ts` (editor-menu + command), `src/settings.ts`, `src/types.ts`
+
+### Fix: Model selector en settings y chat
+- **Problema**: El input de modelo en settings no funcionaba (usaba API vieja de ModelAutocomplete). El botón en chat mostraba "Models" sin indicar el modelo actual.
+- **Fix**:
+  - Settings: botón con label del modelo + popup con search (mismo patrón del chat)
+  - Chat: botón muestra label del modelo actual (ej: "Claude Opus 4.8")
+  - `refreshFromSettings()` sincroniza chat al cerrar settings
+  - `onFocus()` también refresca modelos
+- **Archivos**: `src/model-autocomplete.ts`, `src/chat-view.ts`, `src/settings.ts`
+
+### Fix: AssemblyAI v2 API
+- **Problema**: Error 400 — campo `model` inválido en API v2.
+- **Fix**: Cambiado a `speech_models: ["universal-3-pro"]` (campo correcto de v2). Modelo recomendado por AssemblyAI.
+- **Docs**: `universal-3-5-pro` (preview), `universal-3-pro` (recomendado), `universal-2` (fallback)
+- **Archivo**: `src/voice-providers/assemblyai.ts`
+
+### Fix: Deepgram diarization
+- **Problema**: No tenía params de diarización, usaba solo `channels`.
+- **Fix**: Agregado `diarize_model: "latest"` y `utterances: "true"`. Prioriza utterances sobre channels.
+- **Archivo**: `src/voice-providers/deepgram.ts`
+
+### Fix: Gladia Solaria 3 + diarization
+- **Problema**: Modelo viejo, sin diarización.
+- **Fix**: Modelo `solaria-3` (máxima precisión para ES/EN/FR/DE/IT). `diarization: true`. Polling extendido a 120 intentos.
+- **Archivo**: `src/voice-providers/gladia.ts`
+
+### Fix: OpenRouter ASR reemplazado por Groq Whisper
+- **Problema**: OpenRouter no tiene endpoint de transcripción de audio. `/v1/audio/transcriptions` no existe.
+- **Fix**: Eliminado OpenRouter ASR, reemplazado por Groq Whisper (`whisper-large-v3-turbo`). Gratis, rápido.
+- **Archivos**: eliminado `src/voice-providers/openrouter.ts`, creado `src/voice-providers/groq.ts`, actualizado registry, types, settings
+
+### Infra: CSS split + esbuild concatenation
+- **Problema**: `styles.css` monolítico (886 líneas).
+- **Fix**: Split en 4 archivos temáticos bajo `src/styles/`:
+  - `01-layout.css` (219 líneas) — chat structure, header, input, states
+  - `02-messages.css` (140 líneas) — messages, tool calls, badges
+  - `03-panels.css` (320 líneas) — sidebar, autocomplete, history, search, compare
+  - `04-themes.css` (100+ líneas) — themes, voice, models, dictate modal
+- **Build**: `esbuild.config.cjs` con plugin `css-concat` que une los 4 archivos en `styles.css`
+
+### Commit
+- `09a2374` — 19 archivos, +1792 / -434 líneas
+- Pushed a `main` en GitHub
+
+## Archivos sesión 4
+
+| Archivo | Líneas | Rol |
+|---------|:---:|-----|
+| `src/dictate-modal.ts` | 159 | Modal de dictado Wispr Flow |
+| `src/model-autocomplete.ts` | 150 | Autocomplete con button trigger + search |
+| `src/chat-view.ts` | 348 | Model label, refreshFromSettings |
+| `src/settings.ts` | 473 | Dictate prompt, model button, Groq ASR |
+| `src/types.ts` | 222 | dictateCleanupPrompt, groqApiKey, ASRProvider |
+| `src/voice-providers/groq.ts` | 38 | Groq Whisper transcriber |
+| `src/voice-providers/deepgram.ts` | 68 | Diarization params |
+| `src/voice-providers/gladia.ts` | 107 | Solaria 3 + diarization |
+| `src/voice-providers/assemblyai.ts` | 90 | speech_models fix |
+| `src/styles/01-layout.css` | 219 | Chat layout |
+| `src/styles/02-messages.css` | 140 | Messages + tools |
+| `src/styles/03-panels.css` | 320 | Panels |
+| `src/styles/04-themes.css` | 135 | Themes + dictate modal |
+| `esbuild.config.cjs` | 38 | CSS concatenation plugin |
+| `main.ts` | 130 | Editor-menu, dictate command |
