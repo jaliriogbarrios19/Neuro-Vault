@@ -167,6 +167,23 @@ export interface ChatSession {
   createdAt: number;
 }
 
+export type MemoryCategory =
+  | "personal"
+  | "academic"
+  | "health"
+  | "family"
+  | "social"
+  | "other";
+
+export interface Memory {
+  id: string;
+  content: string;
+  category: MemoryCategory;
+  tags: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export type ASRProvider =
   | "deepgram"
   | "assemblyai"
@@ -213,6 +230,10 @@ export interface PluginSettings {
   groqApiKey: string;
   asrLanguage: string;
   dictateCleanupPrompt: string;
+  enableMemory: boolean;
+  autoExtractMemory: boolean;
+  memories?: Memory[];
+  maxMemories: number;
 }
 
 export const API_KEY_FIELDS: Record<LLMProvider, keyof PluginSettings> = {

@@ -12,6 +12,14 @@ registerTool(
           type: "string",
           description: "Path to the file relative to the vault root",
         },
+        offset: {
+          type: "number",
+          description: "Character offset to start reading from (default: 0)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of characters to read (default: 50000)",
+        },
       },
       required: ["path"],
     },
@@ -30,9 +38,17 @@ registerTool(
 
     try {
       const content = await app.vault.read(file);
-      const truncated =
-        content.length > 8000 ? content.slice(0, 8000) + "\n...(truncated)" : content;
-      return truncated;
+      const offset = Number(args.offset) || 0;
+      const limit = Number(args.limit) || 50000;
+      const slice = content.slice(offset, offset + limit);
+      const endReached = offset + limit >= content.length;
+
+      if (offset === 0 && endReached) {
+        return slice;
+      }
+
+      const header = `[offset ${offset}/${content.length} chars, reading ${slice.length}]\n`;
+      return header + slice + (endReached ? "" : `\n...(more content available, use offset=${offset + limit} to continue)`);
     } catch (e) {
       return JSON.stringify({
         error: e instanceof Error ? e.message : String(e),
@@ -50,34 +66,51 @@ registerTool(
       properties: {
         query: {
           type: "string",
-          description: "Text to search for in vault notes",
+          description: "Text to search for in vault notes (case-insensitive substring or /regex/)",
+        },
+        maxResults: {
+          type: "number",
+          description: "Maximum number of results to return (default: 10)",
         },
       },
       required: ["query"],
     },
   },
   async (app, args) => {
-    const query = String(args.query ?? "").toLowerCase();
-    if (!query) {
-      return JSON.stringify({ error: "Missing query" });
+    const rawQuery = String(args.query ?? "");
+    const maxResults = Number(args.maxResults) || 10;
+    if (!rawQuery) return JSON.stringify({ error: "Missing query" });
+
+    let matcher: (text: string) => number;
+    const regexMatch = rawQuery.match(/^\/(.+)\/([gimsuy]*)$/);
+    if (regexMatch) {
+      try {
+        const re = new RegExp(regexMatch[1], regexMatch[2]);
+        matcher = (text) => {
+          const m = re.exec(text);
+          return m ? m.index : -1;
+        };
+      } catch {
+        return JSON.stringify({ error: `Invalid regex: ${rawQuery}` });
+      }
+    } else {
+      const lower = rawQuery.toLowerCase();
+      matcher = (text) => text.toLowerCase().indexOf(lower);
     }
 
-    // Core search feature — full vault scan is required to find matching notes
     const files = app.vault.getMarkdownFiles();
     const results: { path: string; snippet: string }[] = [];
-    const maxResults = 10;
 
     for (const file of files) {
       if (results.length >= maxResults) break;
 
       try {
-        const content = await app.vault.read(file);
-        const lower = content.toLowerCase();
-        const idx = lower.indexOf(query);
+        const content = await app.vault.cachedRead(file);
+        const idx = matcher(content);
 
         if (idx !== -1) {
-          const start = Math.max(0, idx - 40);
-          const end = Math.min(content.length, idx + query.length + 80);
+          const start = Math.max(0, idx - 60);
+          const end = Math.min(content.length, idx + rawQuery.length + 120);
           const snippet = content.slice(start, end).replace(/\n/g, " ").trim();
           results.push({ path: file.path, snippet });
         }

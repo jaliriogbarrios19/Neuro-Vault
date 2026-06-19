@@ -67,6 +67,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   groqApiKey: "",
   asrLanguage: "es",
   dictateCleanupPrompt: "You are a voice-to-text formatter. Clean up this voice transcription into proper written text. Fix punctuation, capitalization, and grammar. Remove filler words (um, uh, like, you know, o sea, eh, bueno, este). Format into clear paragraphs if the text is long enough. Keep the original meaning and tone exactly. Do not add content that was not spoken. Do not add commentary, explanations, or headers. Output only the cleaned text, nothing else.",
+  enableMemory: true,
+  autoExtractMemory: true,
+  maxMemories: 200,
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -437,6 +440,48 @@ export class SettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
       });
+
+    new Setting(containerEl).setName("Memory").setHeading();
+    containerEl.createEl("p", {
+      text: "Persistent memory lets the agent remember facts about you across sessions.",
+      cls: "setting-item-description",
+    });
+
+    new Setting(containerEl)
+      .setName("Enable Memory")
+      .setDesc("Allow the agent to save and recall facts about you")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.enableMemory).onChange(async (v) => {
+          this.plugin.settings.enableMemory = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Auto-Extract Memories")
+      .setDesc("Automatically extract key facts after each conversation")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.autoExtractMemory).onChange(async (v) => {
+          this.plugin.settings.autoExtractMemory = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Max Memories")
+      .setDesc("Maximum number of memories to keep (oldest removed when exceeded)")
+      .addText((text) =>
+        text
+          .setPlaceholder("200")
+          .setValue(String(this.plugin.settings.maxMemories || 200))
+          .onChange((v) => {
+            const n = parseInt(v, 10);
+            if (!isNaN(n) && n > 0) {
+              this.plugin.settings.maxMemories = n;
+              this.debouncedSave();
+            }
+          })
+      );
 
     new Setting(containerEl).setName("All LLM API Keys").setHeading();
 

@@ -1,15 +1,22 @@
+import { App, MarkdownRenderer } from "obsidian";
 import type { ChatMessage, ToolCall } from "./types";
 
 export function createMessageEl(
   msg: ChatMessage,
   toolCalls?: ToolCall[],
-  onBranch?: () => void
+  onBranch?: () => void,
+  app?: App
 ): HTMLElement {
   const wrapper = createDiv("neuro-vault-message");
 
   if (msg.role === "user") {
     wrapper.addClass("neuro-vault-message-user");
-    wrapper.createDiv({ text: msg.content });
+    const contentEl = wrapper.createDiv();
+    if (app) {
+      MarkdownRenderer.render(app, msg.content, contentEl, "", null as any);
+    } else {
+      contentEl.setText(msg.content);
+    }
     return wrapper;
   }
 

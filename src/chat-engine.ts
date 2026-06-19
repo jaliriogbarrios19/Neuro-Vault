@@ -5,12 +5,14 @@ import {
   LLMProvider,
   ToolDefinition,
   ToolCall,
+  PluginSettings,
 } from "./types";
-import { streamChat } from "./llm-client";
+import { streamChat, callLLM } from "./llm-client";
 import { executeTool, getToolDefinitions } from "./tool-registry";
 import { trimMessages } from "./trim-messages";
+import { MemoryManager } from "./memory-manager";
 
-function buildSystemPrompt(custom?: string): string {
+function buildSystemPrompt(custom?: string, settings?: PluginSettings): string {
   const today = new Date();
   const dateStr = today.toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
@@ -25,9 +27,20 @@ Guidelines:
 - When searching notes, present results clearly with file paths.
 - If a tool fails, explain what went wrong and suggest alternatives.
 - Never invent file paths or content. Only work with what the tools return.
-- Respond in the same language the user uses.`;
+- Respond in the same language the user uses.
+- When you learn important facts about the user (preferences, personal details, context), save them using memory_add.`;
 
-  return `${base}\n\nToday's date is ${dateStr}. Use this as your temporal reference for any date-related questions, research, or context.`;
+  let prompt = `${base}\n\nToday's date is ${dateStr}. Use this as your temporal reference for any date-related questions, research, or context.`;
+
+  if (settings?.enableMemory && settings.memories?.length) {
+    const manager = new MemoryManager(settings);
+    const context = manager.formatForContext(15);
+    if (context) {
+      prompt += `\n\n${context}`;
+    }
+  }
+
+  return prompt;
 }
 
 const MAX_TOOL_ITERATIONS = 5;
@@ -40,19 +53,25 @@ export class ChatEngine {
   private viewCallbacks: StreamCallbacks | null = null;
   private systemPrompt: string;
   private basePrompt: string;
+  private settings?: PluginSettings;
 
-  constructor(app: App, systemPrompt?: string) {
+  constructor(app: App, systemPrompt?: string, settings?: PluginSettings) {
     this.app = app;
     this.basePrompt = systemPrompt || "";
-    this.systemPrompt = buildSystemPrompt(systemPrompt);
+    this.settings = settings;
+    this.systemPrompt = buildSystemPrompt(systemPrompt, settings);
     this.messages = [{ role: "system", content: this.systemPrompt }];
   }
 
   reset(): void {
-    this.systemPrompt = buildSystemPrompt(this.basePrompt || undefined);
+    this.systemPrompt = buildSystemPrompt(this.basePrompt || undefined, this.settings);
     this.messages = [{ role: "system", content: this.systemPrompt }];
     this.abortController?.abort();
     this.abortController = null;
+  }
+
+  updateSettings(settings: PluginSettings): void {
+    this.settings = settings;
   }
 
   setViewCallbacks(callbacks: StreamCallbacks): void {
@@ -166,17 +185,23 @@ export class ChatEngine {
           break;
         }
 
-        for (const tc of pendingToolCalls) {
-          const result = await executeTool(this.app, tc.name, tc.arguments);
+        const toolResults = await Promise.all(
+          pendingToolCalls.map(async (tc) => {
+            const result = await executeTool(this.app, tc.name, tc.arguments);
+            return { id: tc.id, name: tc.name, result };
+          })
+        );
+
+        for (const tr of toolResults) {
           this.messages.push({
             role: "tool",
-            content: result,
-            toolCallId: tc.id,
+            content: tr.result,
+            toolCallId: tr.id,
           });
 
           this.viewCallbacks?.onToolResult({
-            toolCallId: tc.id,
-            content: result,
+            toolCallId: tr.id,
+            content: tr.result,
           });
         }
       }
@@ -199,6 +224,71 @@ export class ChatEngine {
   }
 
   private trimHistory(): void {
-    this.messages = trimMessages(this.messages, 8);
+    this.messages = trimMessages(this.messages);
+  }
+
+  async extractMemories(
+    provider: LLMProvider,
+    apiKey: string,
+    model: string
+  ): Promise<number> {
+    if (!this.settings?.enableMemory || !this.settings?.autoExtractMemory) return 0;
+
+    const conversation = this.messages
+      .filter((m) => m.role !== "system")
+      .map((m) => `${m.role}: ${m.content}`)
+      .join("\n");
+
+    if (conversation.length < 100) return 0;
+
+    const prompt = `Analyze this conversation and extract key facts about the user that would be useful to remember for future interactions.
+
+Return a JSON array of objects. Each object has:
+- "content": the fact (short, clear sentence)
+- "category": one of "personal", "academic", "health", "family", "social", "other"
+- "tags": array of relevant keywords
+
+Only extract NEW, SPECIFIC facts. Do not repeat information already known. If no new facts, return [].
+
+Conversation:
+${conversation}
+
+Return ONLY the JSON array, no explanation.`;
+
+    try {
+      const response = await callLLM(provider, apiKey, model, prompt);
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) return 0;
+
+      const facts = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(facts)) return 0;
+
+      const manager = new MemoryManager(this.settings);
+      let count = 0;
+
+      for (const fact of facts) {
+        if (!fact.content || typeof fact.content !== "string") continue;
+        const content = fact.content.trim();
+        if (content.length < 5) continue;
+
+        const existing = manager.search(content, 3);
+        const isDuplicate = existing.some((m) =>
+          m.content.toLowerCase().includes(content.toLowerCase()) ||
+          content.toLowerCase().includes(m.content.toLowerCase())
+        );
+        if (isDuplicate) continue;
+
+        manager.add(
+          content,
+          fact.category || "other",
+          Array.isArray(fact.tags) ? fact.tags.map(String) : []
+        );
+        count++;
+      }
+
+      return count;
+    } catch {
+      return 0;
+    }
   }
 }

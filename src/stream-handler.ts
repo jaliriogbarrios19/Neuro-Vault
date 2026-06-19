@@ -76,7 +76,7 @@ export class StreamHandler {
   }
 
   renderMessage(msg: ChatMessage, onBranch?: () => void): HTMLElement {
-    const el = createMessageEl(msg, undefined, onBranch);
+    const el = createMessageEl(msg, undefined, onBranch, this.app);
     this.messagesEl.appendChild(el);
     if (msg.role === "assistant" && msg.content) this.renderMarkdownAsync(el, msg.content);
     return el;

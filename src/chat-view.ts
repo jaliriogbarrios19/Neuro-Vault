@@ -40,7 +40,7 @@ export class ChatView extends ItemView {
   constructor(leaf: WorkspaceLeaf, plugin: NeuroVaultPlugin) {
     super(leaf);
     this.plugin = plugin;
-    this.engine = new ChatEngine(plugin.app, plugin.settings.systemPrompt || undefined);
+    this.engine = new ChatEngine(plugin.app, plugin.settings.systemPrompt || undefined, plugin.settings);
     this.stream = new StreamHandler(plugin.app);
     this.engine.setViewCallbacks(this.stream.createCallbacks(
       () => this.scrollToBottom(),
@@ -148,6 +148,7 @@ export class ChatView extends ItemView {
     const models = LLM_MODELS[provider] || [];
     this.modelAutocomplete.setModels(models);
     this.updateModelsBtnLabel();
+    this.engine.updateSettings(this.plugin.settings);
   }
 
   private getModelLabel(): string {
@@ -273,6 +274,8 @@ export class ChatView extends ItemView {
   }
 
   private doDelete(sessionId: string): void {
+    const confirmed = window.confirm("Delete this session? This cannot be undone.");
+    if (!confirmed) return;
     const wasActive = deleteSession(this.plugin.settings, sessionId);
     if (wasActive) {
       this.activeSessionId = undefined;
@@ -304,6 +307,17 @@ export class ChatView extends ItemView {
     }
   }
 
+  private async extractMemoriesAsync(provider: string, apiKey: string, model: string): Promise<void> {
+    try {
+      const count = await this.engine.extractMemories(provider as any, apiKey, model);
+      if (count > 0) {
+        await this.plugin.saveSettings();
+      }
+    } catch {
+      /* silent — memory extraction should never break the UX */
+    }
+  }
+
   private showError(message: string): void {
     const errEl = document.createElement("div");
     errEl.className = "neuro-vault-error";
@@ -327,14 +341,32 @@ export class ChatView extends ItemView {
   }
 
   private async handleSend(): Promise<void> {
-    const text = this.inputEl.value.trim();
+    let text = this.inputEl.value.trim();
     if (!text) return;
+
+    const atFilePattern = /@([^\s@]+\.(?:md|txt|json|csv|xml|html|css|js|ts|py|yaml|yml))/gi;
+    const atMatches = [...text.matchAll(atFilePattern)];
+    if (atMatches.length > 0) {
+      for (const match of atMatches) {
+        const filePath = match[1];
+        const file = this.plugin.app.vault.getAbstractFileByPath(filePath);
+        if (file && "extension" in file) {
+          try {
+            const content = await this.plugin.app.vault.read(file as any);
+            const maxLen = 20000;
+            const truncated = content.length > maxLen ? content.slice(0, maxLen) + "\n...(truncated)" : content;
+            text = text.replace(match[0], `\n\n--- File: ${filePath} ---\n${truncated}\n--- End file ---\n`);
+          } catch { /* skip unreadable files */ }
+        }
+      }
+    }
+
     const settings = this.plugin.settings;
     const provider = settings.llmProvider;
     const apiKey = this.plugin.getApiKey(provider);
     if (!apiKey) { this.showError("No API key configured. Go to Settings \u2192 Neuro Vault."); return; }
     if (this.messagesEl.querySelector(".neuro-vault-empty")) this.messagesEl.empty();
-    this.messagesEl.appendChild(createMessageEl({ role: "user", content: text }));
+    this.messagesEl.appendChild(createMessageEl({ role: "user", content: text }, undefined, undefined, this.plugin.app));
     this.scrollToBottom();
     this.inputEl.value = "";
     this.inputEl.setCssProps({ "--nv-h": "auto" });
@@ -353,6 +385,7 @@ export class ChatView extends ItemView {
         this.setInputEnabled(true);
         showCostBadge(this.messagesEl, this.engine.getMessages(), text, model, () => this.scrollToBottom());
         this.doSave();
+        this.extractMemoriesAsync(provider, apiKey, model);
       }
     }
   }

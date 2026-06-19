@@ -1,6 +1,8 @@
 import { App, TFile, normalizePath } from "obsidian";
 import { registerTool } from "../tool-registry";
 
+const PDF_LIMIT = 50000;
+
 registerTool(
   {
     name: "read_pdf",
@@ -11,6 +13,14 @@ registerTool(
         path: {
           type: "string",
           description: "Path to PDF file in the vault",
+        },
+        offset: {
+          type: "number",
+          description: "Character offset to start reading from (default: 0)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum characters to return (default: 50000)",
         },
       },
       required: ["path"],
@@ -32,13 +42,21 @@ registerTool(
 
     try {
       const arrayBuffer = await app.vault.readBinary(file);
-      const text = extractPdfText(arrayBuffer);
-      const truncated = text.length > 12000
-        ? text.slice(0, 12000) + "\n...(truncated)"
-        : text;
+      const text = await extractPdfText(arrayBuffer);
+
+      const offset = Number(args.offset) || 0;
+      const limit = Number(args.limit) || PDF_LIMIT;
+      const slice = text.slice(offset, offset + limit);
+      const endReached = offset + limit >= text.length;
+
+      if (offset === 0 && endReached) {
+        return JSON.stringify({ path: file.path, text: slice, size: arrayBuffer.byteLength });
+      }
+
+      const header = `[offset ${offset}/${text.length} chars, reading ${slice.length}]\n`;
       return JSON.stringify({
         path: file.path,
-        text: truncated,
+        text: header + slice + (endReached ? "" : `\n...(more content available, use offset=${offset + limit} to continue)`),
         size: arrayBuffer.byteLength,
       });
     } catch (e) {
@@ -47,22 +65,25 @@ registerTool(
   }
 );
 
-function extractPdfText(buffer: ArrayBuffer): string {
-  const raw = new TextDecoder("latin1").decode(buffer);
-  const lines: string[] = [];
-  const re = /BT\s*\n([\s\S]*?)\n\s*ET/g;
-  let match;
-  while ((match = re.exec(raw)) !== null) {
-    const block = match[1];
-    const tj = /\((.*?)\)\s*Tj/g;
-    let textMatch;
-    while ((textMatch = tj.exec(block)) !== null) {
-      let text = textMatch[1];
-      if (text.trim()) lines.push(text);
-    }
+async function extractPdfText(buffer: ArrayBuffer): Promise<string> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer), useWorkerFetch: false });
+  const pdf = await loadingTask.promise;
+  const pages: string[] = [];
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item: any) => item.str || "")
+      .join(" ");
+    if (pageText.trim()) pages.push(pageText);
   }
-  if (lines.length === 0) {
-    return "[No extractable text found in this PDF. The content may be image-based or compressed.]";
+
+  if (pages.length === 0) {
+    return "[No extractable text found in this PDF. The content may be image-based or scanned.]";
   }
-  return lines.join(" ");
+  return pages.join("\n\n");
 }

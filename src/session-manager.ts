@@ -2,6 +2,8 @@ import type { App } from "obsidian";
 import type { ChatMessage, ChatSession, PluginSettings } from "./types";
 import { generateSessionId, getSessionTitle } from "./history-panel";
 
+const MAX_SESSIONS = 50;
+
 export function migrateOldConversation(settings: PluginSettings): boolean {
   if (settings.conversationMessages?.length && !settings.chatSessions?.length) {
     const session: ChatSession = {
@@ -40,6 +42,12 @@ export function saveCurrentSession(
   };
   if (existing >= 0) sessions[existing] = session;
   else sessions.push(session);
+
+  if (sessions.length > MAX_SESSIONS) {
+    sessions.sort((a, b) => b.createdAt - a.createdAt);
+    sessions.length = MAX_SESSIONS;
+  }
+
   settings.chatSessions = sessions;
   settings.activeSessionId = activeId;
   return activeId;

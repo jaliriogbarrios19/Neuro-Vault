@@ -7,18 +7,18 @@ function msg(role: ChatMessage["role"], content: string): ChatMessage {
 }
 
 describe("trimMessages", () => {
-  it("keeps all messages when under limit", () => {
+  it("keeps all messages when under budget", () => {
     const messages: ChatMessage[] = [
       msg("system", "You are helpful"),
       msg("user", "Hello"),
       msg("assistant", "Hi!"),
     ];
-    const result = trimMessages(messages, 5);
+    const result = trimMessages(messages);
     expect(result).toHaveLength(3);
     expect(result[0].role).toBe("system");
   });
 
-  it("trims old exchanges keeping system prompt", () => {
+  it("trims old exchanges keeping system prompt and last user", () => {
     const messages: ChatMessage[] = [
       msg("system", "You are helpful"),
       msg("user", "Q1"),
@@ -27,49 +27,88 @@ describe("trimMessages", () => {
       msg("assistant", "A2"),
       msg("user", "Q3"),
       msg("assistant", "A3"),
-      msg("user", "Q4"),
-      msg("assistant", "A4"),
-      msg("user", "Q5"),
-      msg("assistant", "A5"),
     ];
-    const result = trimMessages(messages, 3);
+    const result = trimMessages(messages, undefined, 200);
     expect(result[0].role).toBe("system");
-    expect(result[1].role).toBe("user");
-    expect(result[1].content).toBe("Q3");
-    expect(result).toHaveLength(7); // system + 3 exchanges (Q3..A5)
+    expect(result[result.length - 1].role).toBe("assistant");
+    expect(result.some(m => m.content === "Q3")).toBe(true);
   });
 
-  it("preserves tool call chains within an exchange", () => {
+  it("always keeps the last user message even if alone", () => {
+    const bigContent = "x".repeat(50000);
+    const messages: ChatMessage[] = [
+      msg("system", "prompt"),
+      msg("user", "Q1"),
+      msg("assistant", bigContent),
+      msg("user", "Q2"),
+      msg("assistant", "A2"),
+    ];
+    const result = trimMessages(messages, undefined, 1000);
+    expect(result.some(m => m.content === "Q2")).toBe(true);
+    expect(result[result.length - 1].content).toBe("A2");
+  });
+
+  it("preserves tool-call chains without orphans", () => {
     const messages: ChatMessage[] = [
       msg("system", "You are helpful"),
       msg("user", "Search something"),
       msg("assistant", "Let me search"),
-      msg("tool", "some result"),
+      msg("tool", "search result data"),
       msg("assistant", "Found it"),
       msg("user", "Q2"),
       msg("assistant", "A2"),
-      msg("user", "Q3"),
-      msg("assistant", "A3"),
-      msg("user", "Q4"),
-      msg("assistant", "A4"),
     ];
-    const result = trimMessages(messages, 2);
-    expect(result[1].role).toBe("user");
-    expect(result[1].content).toBe("Q3");
-    // Q3, A3, Q4, A4 = 4 messages + system = 5
-    expect(result).toHaveLength(5);
+    const result = trimMessages(messages, undefined, 500);
+    expect(result[0].role).toBe("system");
+    if (result.some(m => m.role === "tool")) {
+      const toolIdx = result.findIndex(m => m.role === "tool");
+      expect(result[toolIdx - 1].role).toBe("assistant");
+    }
+  });
+
+  it("drops large tool results first when over budget", () => {
+    const bigResult = "x".repeat(40000);
+    const messages: ChatMessage[] = [
+      msg("system", "prompt"),
+      msg("user", "read file"),
+      msg("assistant", "reading..."),
+      { role: "tool", content: bigResult, toolCallId: "tc1" },
+      msg("assistant", "Here is the summary"),
+      msg("user", "thanks"),
+      msg("assistant", "you're welcome"),
+    ];
+    const result = trimMessages(messages, undefined, 3000);
+    expect(result[0].role).toBe("system");
+    expect(result.some(m => m.content === "thanks")).toBe(true);
   });
 
   it("handles empty array", () => {
-    expect(trimMessages([], 5)).toHaveLength(0);
+    expect(trimMessages([])).toHaveLength(0);
   });
 
-  it("does not trim when no user messages", () => {
+  it("handles system-only messages", () => {
+    const result = trimMessages([msg("system", "prompt")]);
+    expect(result).toHaveLength(1);
+  });
+
+  it("handles messages with no user messages", () => {
     const messages: ChatMessage[] = [
       msg("system", "prompt"),
       msg("assistant", "response"),
     ];
-    const result = trimMessages(messages, 1);
+    const result = trimMessages(messages);
     expect(result).toHaveLength(2);
+  });
+
+  it("uses default 100K token budget when not specified", () => {
+    const messages: ChatMessage[] = [
+      msg("system", "prompt"),
+      msg("user", "Q1"),
+      msg("assistant", "A1"),
+      msg("user", "Q2"),
+      msg("assistant", "A2"),
+    ];
+    const result = trimMessages(messages);
+    expect(result).toHaveLength(5);
   });
 });

@@ -13,6 +13,7 @@ import "./src/tools/web-search";
 import "./src/tools/academic-search";
 import "./src/tools/audio-transcribe";
 import "./src/tools/pdf-read";
+import "./src/tools/memory-tools";
 import { LLMProvider, LLM_MODELS, API_KEY_FIELDS, MODEL_FIELDS, DEFAULT_MODELS, PluginSettings, ChatMessage } from "./src/types";
 
 export default class NeuroVaultPlugin extends Plugin {
@@ -67,7 +68,7 @@ export default class NeuroVaultPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    setSpobBaseUrl(this.settings.spobBaseUrl || "http://localhost:8080");
+    setSpobBaseUrl(this.settings.spobBaseUrl || DEFAULT_SETTINGS.spobBaseUrl);
 
     if (this.settings.openrouterCustomModels?.length) {
       LLM_MODELS.openrouter = this.settings.openrouterCustomModels;
@@ -76,7 +77,7 @@ export default class NeuroVaultPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-    setSpobBaseUrl(this.settings.spobBaseUrl || "http://localhost:8080");
+    setSpobBaseUrl(this.settings.spobBaseUrl || DEFAULT_SETTINGS.spobBaseUrl);
   }
 
   getApiKey(provider: LLMProvider): string {

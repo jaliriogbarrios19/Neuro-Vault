@@ -33,7 +33,7 @@ async function exportMarkdown(app: App, messages: ChatMessage[]): Promise<string
         break;
       case "tool":
         lines.push("```");
-        lines.push(`// Tool result: ${msg.content.slice(0, 500)}`);
+        lines.push(`// Tool result: ${msg.content.slice(0, 5000)}`);
         lines.push("```\n");
         break;
     }
@@ -82,7 +82,7 @@ async function exportHtml(app: App, messages: ChatMessage[]): Promise<string> {
         parts.push(`<div class="msg assistant"><div class="role">Assistant</div>${escaped}</div>\n`);
         break;
       case "tool":
-        parts.push(`<div class="msg tool"><div class="role">Tool</div><pre><code>${escaped.slice(0, 500)}</code></pre></div>\n`);
+        parts.push(`<div class="msg tool"><div class="role">Tool</div><pre><code>${escaped.slice(0, 5000)}</code></pre></div>\n`);
         break;
     }
   }

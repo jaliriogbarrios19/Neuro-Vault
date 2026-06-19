@@ -1,11 +1,13 @@
 import { App, TFile, normalizePath } from "obsidian";
 import { registerTool } from "../tool-registry";
 import { getPluginInstance } from "../settings";
+import { ASR_REGISTRY } from "../voice-providers/registry";
+import type { ASRProvider } from "../types";
 
 registerTool(
   {
     name: "transcribe_audio",
-    description: "Transcribe an audio file from the vault using OpenAI Whisper",
+    description: "Transcribe an audio file from the vault using the configured ASR provider (Deepgram, AssemblyAI, Gladia, or Groq)",
     parameters: {
       type: "object",
       properties: {
@@ -28,31 +30,24 @@ registerTool(
     }
 
     const plugin = getPluginInstance();
-    const apiKey = plugin?.settings.openaiApiKey;
+    if (!plugin) return JSON.stringify({ error: "Plugin not initialized." });
+
+    const providerId = plugin.settings.asrProvider as ASRProvider;
+    const meta = ASR_REGISTRY[providerId];
+    if (!meta) {
+      return JSON.stringify({ error: `Unknown ASR provider: ${providerId}` });
+    }
+
+    const apiKey = (plugin.settings as unknown as Record<string, string>)[meta.apiKeyField];
     if (!apiKey) {
-      return JSON.stringify({ error: "OpenAI API key not configured. Set it in Settings → Neuro Vault." });
+      return JSON.stringify({ error: `${meta.label} API key not configured. Set it in Settings → Neuro Vault → Voice.` });
     }
 
     try {
       const arrayBuffer = await app.vault.readBinary(file);
-      const formData = new FormData();
       const blob = new Blob([arrayBuffer]);
-      formData.append("file", blob, file.name);
-      formData.append("model", "whisper-1");
-
-      const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}` },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.text().catch(() => "");
-        return JSON.stringify({ error: `Whisper HTTP ${res.status}: ${err.slice(0, 200)}` });
-      }
-
-      const data = await res.json();
-      return JSON.stringify({ text: data.text, path: file.path });
+      const text = await meta.transcriber.transcribe(blob, apiKey, { language: plugin.settings.asrLanguage });
+      return JSON.stringify({ text, path: file.path, provider: providerId });
     } catch (e) {
       return JSON.stringify({ error: e instanceof Error ? e.message : String(e) });
     }
